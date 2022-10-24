@@ -23,7 +23,7 @@ contract VestingVault is Ownable {
         _durationSeconds = durationSeconds;
     }
 
-    receive() external payable onlyOwner {}
+    // receive() external payable onlyOwner {}
 
     function getBeneficiary() public view returns (address) {
         return _beneficiary;
