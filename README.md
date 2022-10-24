@@ -5,14 +5,14 @@ This contract handles the vesting of Eth and ERC20 tokens for a given beneficiar
 ### Functions
 
 * constructor 
-    - should be owned by the deployer of the contract
-    - should be deployed with a set recipient (beneficiery)
+    * should be owned by the deployer of the contract
+    * should be deployed with a set recipient (beneficiery)
 * receive()
-* beneficiary()
-* start()
-* duration()
-* released()
-* released(token)
+* getBeneficiary()
+* getStart()
+* getDuration()
+* getReleasedETH()
+* getReleasedToken(token)
 * release()
 * release(token)
 * vestedAmount(timestamp)

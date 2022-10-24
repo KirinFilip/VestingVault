@@ -1,7 +1,7 @@
-from brownie import VestingVault
+from brownie import VestingVault, accounts, chain
 import pytest
 
 
 @pytest.fixture
 def contract():
-    pass
+    vestingvault = VestingVault.deploy(accounts[1])
