@@ -4,59 +4,64 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract VestingVault is Ownable {
-    event EtherReleased(uint256 amount);
-    event ERC20Released(address token, uint256 amount);
+error AlreadyFundedError(bool locked);
+error BeneficiaryZeroAddressError(address beneficiary);
+error TokenZeroAddressError(address token);
+error InsufficientAmountError(uint256 amount);
+error InsufficientLockedTimeError(uint256 lockedTime);
+
+contract VestingVault is Ownable{
+    // event EtherFunded(uint256 amount);
+    // event EtherWithdrawn(uint256 amount);
+    event ERC20Funded(address token ,uint256 amount);
+    event ERC20RWithdrawn(address token, uint256 amount);
 
     address private immutable _beneficiary;
-    uint64 private immutable _startTimestamp;
-    uint64 private immutable _durationSeconds;
-
-    uint256 private _releasedETH;
-    mapping(address => uint256) private _releasedToken;
-
+    address public tokenVestedAddress;
+    uint256 public amountVested;
+    uint256 public unlockTime;
     bool public locked;
 
     modifier isLocked() {
-        require(!locked, "Vesting Vault already funded");
+        if(!locked) revert AlreadyFundedError(locked);
         _;
     }
 
     constructor(
-        address beneficiary,
-        uint64 startTimestamp,
-        uint64 durationSeconds
+        address beneficiary
     ) {
-        require(
-            beneficiary != address(0),
-            "Beneficiary can not be a zero address"
-        );
+        if(beneficiary == address(0)) revert BeneficiaryZeroAddressError(beneficiary);
         _beneficiary = beneficiary;
-        _startTimestamp = startTimestamp;
-        _durationSeconds = durationSeconds;
     }
 
     function getBeneficiary() public view returns (address) {
         return _beneficiary;
     }
 
-    function getStartTime() public view returns (uint256) {
-        return _startTimestamp;
+    function getAmountVested() public view returns (uint256) {
+        return amountVested;
     }
 
-    function getDuration() public view returns (uint256) {
-        return _durationSeconds;
+    function getUnlockTime() public view returns (uint256) {
+        return unlockTime;
     }
 
-    function getReleasedETH() public view returns (uint256) {
-        return _releasedETH;
-    }
+    function fund(address tokenAddress, uint256 amount, uint256 lockedTime) public onlyOwner isLocked {
+        if(tokenAddress == address(0)) revert TokenZeroAddressError(address(tokenAddress));
+        if(amount <= 0) revert InsufficientAmountError(amount);
+        if(lockedTime <= 0) revert InsufficientLockedTimeError(lockedTime);
 
-    function getReleasedToken(address token) public view returns (uint256) {
-        return _releasedToken[token];
-    }
+        // IERC20 _token = IERC20(tokenAddress); useful/useless ?
+        assert(IERC20(tokenAddress).balanceOf(msg.sender) >= amount);
+        IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount);
 
-    function fund() public onlyOwner isLocked {}
+        emit ERC20Funded(tokenAddress, amount);
+
+        locked = true;
+        tokenVestedAddress = tokenAddress;
+        amountVested = amount;
+        unlockTime = block.timestamp + lockedTime;
+    }
 
     function withdraw() public {}
 }
