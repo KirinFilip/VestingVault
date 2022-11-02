@@ -68,5 +68,6 @@ contract VestingVault is Ownable{
         if(block.timestamp < unlockTime) revert UnlockTimeNotPassedError();
 
         IERC20(tokenVestedAddress).transfer(getBeneficiary(), amountVested);
+        emit ERC20RWithdrawn(tokenVestedAddress, amountVested);
     }
 }
