@@ -4,18 +4,16 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-error BeneficiaryZeroAddressError(address beneficiary);
-error AlreadyFundedError(bool funded);
-error TokenZeroAddressError(address token);
-error InsufficientFundAmountError(uint256 amount);
-error InsufficientLockedTimeError(uint256 lockedTime);
-error WithdrawerNotBeneficiaryError(address beneficiary);
-error VaultNotFundedError();
-error UnlockTimeNotPassedError();
+error VestingVault__BeneficiaryZeroAddress(address beneficiary);
+error VestingVault__AlreadyFunded(bool funded);
+error VestingVault__TokenZeroAddress(address token);
+error VestingVault__InsufficientFundAmount(uint256 amount);
+error VestingVault__InsufficientLockedTime(uint256 lockedTime);
+error VestingVault__WithdrawerNotBeneficiary(address beneficiary);
+error VestingVault__VaultNotFunded(bool funded);
+error VestingVault__UnlockTimeNotPassed();
 
 contract VestingVault is Ownable{
-    // event EtherFunded(uint256 amount);
-    // event EtherWithdrawn(uint256 amount);
     event ERC20Funded(address token, uint256 amount);
     event ERC20Withdrawn(address token, uint256 amount);
 
@@ -24,11 +22,42 @@ contract VestingVault is Ownable{
     uint256 public amountVested;
     uint256 public unlockTime;
     bool public funded = false;
+    IERC20 public token;
 
     constructor(address beneficiary) {
-        if(beneficiary == address(0)) revert BeneficiaryZeroAddressError(beneficiary);
+        if(beneficiary == address(0)) revert VestingVault__BeneficiaryZeroAddress(beneficiary);
         _beneficiary = beneficiary;
     }
+
+    // public functions
+
+    function fund(address tokenAddress, uint256 amount, uint256 lockedTime) public onlyOwner {
+        if(funded) revert VestingVault__AlreadyFunded(funded);
+        if(tokenAddress == address(0)) revert VestingVault__TokenZeroAddress(address(tokenAddress));
+        if(amount <= 0) revert VestingVault__InsufficientFundAmount(amount);
+        if(lockedTime == 0) revert VestingVault__InsufficientLockedTime(lockedTime);
+
+        token = IERC20(tokenAddress);
+        token.transferFrom(msg.sender, address(this), amount);
+        emit ERC20Funded(tokenAddress, amount);
+
+        funded = true;
+        tokenVestedAddress = tokenAddress;
+        amountVested = amount;
+        unlockTime = block.timestamp + lockedTime;
+    }
+
+    function withdrawToken() public {
+        if(msg.sender != getBeneficiary()) revert VestingVault__WithdrawerNotBeneficiary(getBeneficiary());
+        if(!funded) revert VestingVault__VaultNotFunded(funded);
+        if(block.timestamp < unlockTime) revert VestingVault__UnlockTimeNotPassed();
+
+        token = IERC20(tokenVestedAddress);
+        token.transfer(getBeneficiary(), amountVested);
+        emit ERC20Withdrawn(tokenVestedAddress, amountVested);
+    }
+
+    // view functions
 
     function getBeneficiary() public view returns (address) {
         return _beneficiary;
@@ -40,34 +69,5 @@ contract VestingVault is Ownable{
 
     function getUnlockTime() public view returns (uint256) {
         return unlockTime;
-    }
-
-    function getTimeUntilUnlocked() public view returns (uint256) {
-        return unlockTime - block.timestamp;
-    }
-
-    function fund(address tokenAddress, uint256 amount, uint256 lockedTime) public onlyOwner {
-        if(funded) revert AlreadyFundedError(funded);
-        if(tokenAddress == address(0)) revert TokenZeroAddressError(address(tokenAddress));
-        if(amount <= 0) revert InsufficientFundAmountError(amount);
-        if(lockedTime <= 0) revert InsufficientLockedTimeError(lockedTime);
-
-        assert(IERC20(tokenAddress).balanceOf(msg.sender) >= amount);
-        IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount);
-        emit ERC20Funded(tokenAddress, amount);
-
-        funded = true;
-        tokenVestedAddress = tokenAddress;
-        amountVested = amount;
-        unlockTime = block.timestamp + lockedTime;
-    }
-
-    function withdraw() public {
-        if(msg.sender != getBeneficiary()) revert WithdrawerNotBeneficiaryError(getBeneficiary());
-        if(!funded) revert VaultNotFundedError();
-        if(block.timestamp < unlockTime) revert UnlockTimeNotPassedError();
-
-        IERC20(tokenVestedAddress).transfer(getBeneficiary(), amountVested);
-        emit ERC20Withdrawn(tokenVestedAddress, amountVested);
     }
 }
