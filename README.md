@@ -6,13 +6,17 @@ This contract handles the vesting of Eth and ERC20 tokens for a given beneficiar
 
 ### Functions
 
-* constructor 
-    * should be owned by the deployer of the contract
-    * should be deployed with a set recipient (beneficiery)
+- constructor
+  - owned by the deployer of the contract
+  - deployed with a set recipient (beneficiery)
+- fundToken
+  - one time function to fund the vault with ERC-20 tokens
+  - sets an unlock time
+  - only owner can call
+- withdrawToken
+  - only beneficiary can withdraw tokens after unlock time
 
 ### Events
 
-* EtherFunded(amount)
-* EtherWithdrawn(amount)
-* ERC20Funded(token, amount)
-* ERC20Withdrawn(token, amount)
+- ERC20Funded(token, amount)
+- ERC20Withdrawn(token, amount)
