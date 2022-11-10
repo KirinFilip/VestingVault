@@ -15,6 +15,12 @@ This contract handles the vesting of Eth and ERC20 tokens for a given beneficiar
   - only owner can call
 - withdrawToken
   - only beneficiary can withdraw tokens after unlock time
+- getBeneficiary
+  - returns the address of the beneficiary
+- getAmountVested
+  - returns the amount of vested tokens
+- getUnlockTime
+  - returns the time the tokens are locked
 
 ### Events
 
