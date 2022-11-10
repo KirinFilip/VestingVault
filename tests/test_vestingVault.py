@@ -27,21 +27,21 @@ def test_beneficiary(vaultContract):
     assert vaultContract.getBeneficiary() == accounts[1]
 
 
-#### fund function ###
+#### fundToken function ###
 
 
 def test_AlreadyFunded(vaultContract, tokenContract):
     assert vaultContract.funded() == False
     tokenContract.transfer(accounts[0], 10000, {"from": accounts[2]})
     tokenContract.approve(vaultContract.address, 10000, {"from": accounts[0]})
-    vaultContract.fund(tokenContract.address, 100, 10, {"from": accounts[0]})
+    vaultContract.fundToken(tokenContract.address, 100, 10, {"from": accounts[0]})
     assert vaultContract.funded() == True
     assert vaultContract.tokenVestedAddress() == tokenContract.address
     assert vaultContract.amountVested() == 100
     assert vaultContract.unlockTime() == chain.time() + 10
 
     try:
-        vaultContract.fund(tokenContract.address, 100, 10, {"from": accounts[0]})
+        vaultContract.fundToken(tokenContract.address, 100, 10, {"from": accounts[0]})
     except exceptions.VirtualMachineError as ex:
         assert "VestingVault__AlreadyFunded" in str(ex)
 
@@ -51,7 +51,7 @@ def test_InsufficientFundAmount(vaultContract, tokenContract):
     tokenContract.transfer(accounts[0], 10000, {"from": accounts[2]})
     tokenContract.approve(vaultContract.address, 10000, {"from": accounts[0]})
     try:
-        vaultContract.fund(tokenContract.address, 0, 10, {"from": accounts[0]})
+        vaultContract.fundToken(tokenContract.address, 0, 10, {"from": accounts[0]})
     except exceptions.VirtualMachineError as ex:
         assert "VestingVault__InsufficientFundAmount" in str(ex)
 
@@ -61,7 +61,7 @@ def test_InsufficientLockedTime(vaultContract, tokenContract):
     tokenContract.transfer(accounts[0], 10000, {"from": accounts[2]})
     tokenContract.approve(vaultContract.address, 10000, {"from": accounts[0]})
     try:
-        vaultContract.fund(tokenContract.address, 100, 0, {"from": accounts[0]})
+        vaultContract.fundToken(tokenContract.address, 100, 0, {"from": accounts[0]})
     except exceptions.VirtualMachineError as ex:
         assert "VestingVault__InsufficientLockedTime" in str(ex)
 
@@ -73,7 +73,7 @@ def test_withdrawToken(vaultContract, tokenContract):
     assert vaultContract.funded() == False
     tokenContract.transfer(accounts[0], 10000, {"from": accounts[2]})
     tokenContract.approve(vaultContract.address, 10000, {"from": accounts[0]})
-    vaultContract.fund(tokenContract.address, 100, 10, {"from": accounts[0]})
+    vaultContract.fundToken(tokenContract.address, 100, 10, {"from": accounts[0]})
     assert vaultContract.funded() == True
     chain.sleep(10)
     vaultContract.withdrawToken({"from": accounts[1]})
@@ -84,7 +84,7 @@ def test_WithdrawerNotBeneficiary(vaultContract, tokenContract):
     assert vaultContract.funded() == False
     tokenContract.transfer(accounts[0], 10000, {"from": accounts[2]})
     tokenContract.approve(vaultContract.address, 10000, {"from": accounts[0]})
-    vaultContract.fund(tokenContract.address, 100, 10, {"from": accounts[0]})
+    vaultContract.fundToken(tokenContract.address, 100, 10, {"from": accounts[0]})
     assert vaultContract.funded() == True
     chain.sleep(10)
     try:
@@ -102,7 +102,7 @@ def test_UnlockTimeNotPassed(vaultContract, tokenContract):
     assert vaultContract.funded() == False
     tokenContract.transfer(accounts[0], 10000, {"from": accounts[2]})
     tokenContract.approve(vaultContract.address, 10000, {"from": accounts[0]})
-    vaultContract.fund(tokenContract.address, 100, 10, {"from": accounts[0]})
+    vaultContract.fundToken(tokenContract.address, 100, 10, {"from": accounts[0]})
     assert vaultContract.funded() == True
     try:
         vaultContract.withdrawToken({"from": accounts[1]})
@@ -117,7 +117,7 @@ def test_getAmountVested(vaultContract, tokenContract):
     assert vaultContract.funded() == False
     tokenContract.transfer(accounts[0], 10000, {"from": accounts[2]})
     tokenContract.approve(vaultContract.address, 10000, {"from": accounts[0]})
-    vaultContract.fund(tokenContract.address, 100, 10, {"from": accounts[0]})
+    vaultContract.fundToken(tokenContract.address, 100, 10, {"from": accounts[0]})
     assert vaultContract.getAmountVested() == 100
 
 
@@ -125,5 +125,5 @@ def test_getUnlockTime(vaultContract, tokenContract):
     assert vaultContract.funded() == False
     tokenContract.transfer(accounts[0], 10000, {"from": accounts[2]})
     tokenContract.approve(vaultContract.address, 10000, {"from": accounts[0]})
-    vaultContract.fund(tokenContract.address, 100, 10, {"from": accounts[0]})
+    vaultContract.fundToken(tokenContract.address, 100, 10, {"from": accounts[0]})
     assert vaultContract.getUnlockTime() == chain.time() + 10

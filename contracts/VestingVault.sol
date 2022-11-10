@@ -31,7 +31,7 @@ contract VestingVault is Ownable{
 
     // public functions
 
-    function fund(address tokenAddress, uint256 amount, uint256 lockedTime) public onlyOwner {
+    function fundToken(address tokenAddress, uint256 amount, uint256 lockedTime) public onlyOwner {
         if(funded) revert VestingVault__AlreadyFunded(funded);
         if(tokenAddress == address(0)) revert VestingVault__TokenZeroAddress(address(tokenAddress));
         if(amount <= 0) revert VestingVault__InsufficientFundAmount(amount);
